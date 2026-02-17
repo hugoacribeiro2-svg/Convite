@@ -2,52 +2,95 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- Bibliotecas de AR -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
+    
     <style>
         body { margin: 0; overflow: hidden; }
+        /* Botão Dourado de Início */
         #btn { 
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 1000; padding: 20px; background: #d4af37; color: white; 
-            border: none; border-radius: 50px; font-weight: bold; font-size: 18px;
+            z-index: 1000; padding: 20px 40px; background: #d4af37; color: white; 
+            border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer;
         }
+        /* Ecrã de carregamento azul (MindAR) - vamos garantir que ele não fica preso */
+        .mindar-ui-loading { background: #000 !important; }
     </style>
 </head>
 <body>
     <button id="btn">VER CONVITE MÁGICO</button>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind.txt;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: no; uiError: yes; uiScanning: yes;" 
+             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        
         <a-assets>
-            <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous"></video>
+            <!-- O teu vídeo exemplo1.mp4 -->
+            <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+        <!-- Este é o alvo (o teu convite da bicicleta) -->
         <a-entity mindar-image-target="targetIndex: 0">
-            <!-- O vídeo vai aparecer em cima do convite -->
-            <a-video src="#vid" width="1" height="1" position="0 0 0.1" shader="chromakey" color="0 1 0"></a-video>
+            <!-- Plano do Vídeo com efeito Chroma Key (remove o verde) -->
+            <a-video id="video-obj" src="#vid" width="1" height="1" position="0 0 0.1" shader="chromakey" color="0 1 0"></a-video>
         </a-entity>
     </a-scene>
 
     <script>
-        // Este código remove o fundo verde em tempo real
+        // SHADER PARA REMOVER O FUNDO VERDE (CHROMA KEY)
         AFRAME.registerShader('chromakey', {
-            schema: { src: {type: 'map'}, color: {type: 'color', default: {r:0, g:1, b:0}} },
+            schema: {
+                src: {type: 'map'},
+                color: {type: 'color', default: {r: 0, g: 1, b: 0}}
+            },
             init: function(data) {
                 this.material = new THREE.ShaderMaterial({
-                    uniforms: { tex: {value: data.src}, color: {value: new THREE.Color(data.color)} },
-                    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                    fragmentShader: `varying vec2 vUv; uniform sampler2D tex; uniform vec3 color; void main() { vec4 tColor = texture2D(tex, vUv); float dist = distance(tColor.rgb, color); if (dist < 0.45) { discard; } gl_FragColor = tColor; }`,
+                    uniforms: {
+                        tex: {value: data.src},
+                        color: {value: new THREE.Color(data.color)}
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec2 vUv;
+                        uniform sampler2D tex;
+                        uniform vec3 color;
+                        void main() {
+                            vec4 tColor = texture2D(tex, vUv);
+                            float dist = distance(tColor.rgb, color);
+                            if (dist < 0.4) { discard; }
+                            gl_FragColor = tColor;
+                        }
+                    `,
                     transparent: true
                 });
             }
         });
 
+        // LÓGICA DO BOTÃO PARA INICIAR
         const btn = document.querySelector('#btn');
+        const video = document.querySelector('#vid');
+
         btn.addEventListener('click', () => {
-            const video = document.querySelector('#vid');
+            // Tenta dar play no vídeo (necessário clique do utilizador para som no telemóvel)
             video.play();
             btn.style.display = 'none';
+            console.log("Experiência iniciada!");
+        });
+
+        // Caso o vídeo termine, podemos mostrar o botão de novo ou fazer outra ação
+        video.addEventListener('ended', () => {
+            console.log("Vídeo terminou.");
         });
     </script>
 </body>
