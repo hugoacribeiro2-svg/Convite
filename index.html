@@ -6,7 +6,6 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
     
     <script>
-        // 1. REGISTAR O EFEITO ANTES DA CENA COMECAR (ESSENCIAL)
         AFRAME.registerShader('chromakey', {
             schema: {
                 src: {type: 'map'},
@@ -32,7 +31,7 @@
                         void main() {
                             vec4 tColor = texture2D(tex, vUv);
                             float dist = distance(tColor.rgb, color);
-                            if (dist < 0.4) { discard; }
+                            if (dist < 0.35) { discard; }
                             gl_FragColor = tColor;
                         }
                     `,
@@ -52,14 +51,13 @@
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 1000; padding: 20px 40px; background: #d4af37; color: white; 
             border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer;
         }
     </style>
 </head>
 <body>
     <button id="btn">VER CONVITE MÁGICO</button>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; uiLoading: no;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; filterMinCF:0.0001; filterBeta: 0.001;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
         <a-assets>
             <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous" playsinline webkit-playsinline></video>
@@ -68,10 +66,13 @@
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
         <a-entity mindar-image-target="targetIndex: 0">
-            <!-- CORREÇÃO AQUI: Usamos o material de forma correta -->
-            <a-entity geometry="primitive: plane; width: 1; height: 1" 
+            <!-- 1. CUBO DE TESTE (Se vires isto, a AR está a funcionar!) -->
+            <a-box position="-0.5 0 0.1" scale="0.2 0.2 0.2" color="red"></a-box>
+
+            <!-- 2. O VÍDEO (Aumentei o tamanho e a distância para a frente) -->
+            <a-entity geometry="primitive: plane; width: 1.2; height: 1.2" 
                       material="shader: chromakey; src: #vid; color: 0 1 0" 
-                      position="0 0 0.1">
+                      position="0 0 0.2">
             </a-entity>
         </a-entity>
     </a-scene>
