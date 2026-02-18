@@ -4,47 +4,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
+    
+    <script>
+        // REGISTO DO EFEITO HOLOGRAMA (CHROMA KEY)
+        AFRAME.registerShader('chromakey', {
+            schema: {
+                src: {type: 'map'},
+                color: {type: 'color', default: {r: 0, g: 1, b: 0}}
+            },
+            init: function(data) {
+                this.material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        tex: {value: data.src},
+                        color: {value: new THREE.Color(data.color)}
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec2 vUv;
+                        uniform sampler2D tex;
+                        uniform vec3 color;
+                        void main() {
+                            vec4 tColor = texture2D(tex, vUv);
+                            float dist = distance(tColor.rgb, color);
+                            if (dist < 0.4) { discard; }
+                            gl_FragColor = tColor;
+                        }
+                    `,
+                    transparent: true
+                });
+            }
+        });
+    </script>
+
     <style>
         body { margin: 0; overflow: hidden; }
-        #btn { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; padding: 20px; background: gold; border: none; border-radius: 10px; font-weight: bold; }
+        #btn { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 1000; padding: 20px 40px; background: #d4af37; color: white; 
+            border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
-    <button id="btn">CLIQUE PARA INICIAR</button>
+    <button id="btn">VER CONVITE MÁGICO</button>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; uiLoading: no; filterMinCF:0.0001; filterBeta: 0.001;" 
+             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
         <a-assets>
-            <video id="vid" src="./exemplo1.mp4" preload="auto" loop="false" crossorigin="anonymous" playsinline></video>
+            <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <!-- O Alvo -->
-        <a-entity id="target" mindar-image-target="targetIndex: 0">
-            <!-- CUBO VERMELHO (Para testar se a AR trancou) -->
-            <a-box position="0 0 0" scale="0.5 0.5 0.5" color="red"></a-box>
-            
-            <!-- VIDEO NORMAL (Sem transparência para testar se aparece) -->
-            <a-video src="#vid" width="1" height="1" position="0 0.7 0.1"></a-video>
+        <a-entity mindar-image-target="targetIndex: 0">
+            <!-- O VÍDEO HOLOGRAMA -->
+            <a-entity geometry="primitive: plane; width: 1.2; height: 1.2" 
+                      material="shader: chromakey; src: #vid; color: 0 1 0" 
+                      position="0 0.2 0.1">
+            </a-entity>
         </a-entity>
     </a-scene>
 
     <script>
         const btn = document.querySelector('#btn');
         const video = document.querySelector('#vid');
-        const target = document.querySelector('#target');
-
+        
         btn.addEventListener('click', () => {
             video.play();
             btn.style.display = 'none';
-            alert("Sistema pronto! Aponte para o convite.");
-        });
-
-        // Alerta se o telemóvel encontrar o convite
-        target.addEventListener("targetFound", event => {
-          console.log("Convite encontrado!");
-          alert("CONVITE ENCONTRADO!");
         });
     </script>
 </body>
