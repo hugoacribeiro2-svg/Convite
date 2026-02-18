@@ -2,47 +2,11 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <!-- Bibliotecas de AR -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
     
-    <style>
-        body { margin: 0; overflow: hidden; }
-        /* Botão Dourado de Início */
-        #btn { 
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 1000; padding: 20px 40px; background: #d4af37; color: white; 
-            border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer;
-        }
-        /* Ecrã de carregamento azul (MindAR) - vamos garantir que ele não fica preso */
-        .mindar-ui-loading { background: #000 !important; }
-    </style>
-</head>
-<body>
-    <button id="btn">VER CONVITE MÁGICO</button>
-
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: no; uiError: yes; uiScanning: yes;" 
-             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
-             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-        
-        <a-assets>
-            <!-- O teu vídeo exemplo1.mp4 -->
-            <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous" playsinline webkit-playsinline></video>
-        </a-assets>
-
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-        <!-- Este é o alvo (o teu convite da bicicleta) -->
-        <a-entity mindar-image-target="targetIndex: 0">
-            <!-- Plano do Vídeo com efeito Chroma Key (remove o verde) -->
-            <a-video id="video-obj" src="#vid" width="1" height="1" position="0 0 0.1" shader="chromakey" color="0 1 0"></a-video>
-        </a-entity>
-    </a-scene>
-
     <script>
-        // SHADER PARA REMOVER O FUNDO VERDE (CHROMA KEY)
+        // 1. REGISTAR O EFEITO ANTES DA CENA COMECAR (ESSENCIAL)
         AFRAME.registerShader('chromakey', {
             schema: {
                 src: {type: 'map'},
@@ -74,23 +38,50 @@
                     `,
                     transparent: true
                 });
+            },
+            update: function(data) {
+                this.material.uniforms.tex.value = data.src;
+                this.material.uniforms.color.value = new THREE.Color(data.color);
             }
         });
+    </script>
 
-        // LÓGICA DO BOTÃO PARA INICIAR
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #btn { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 1000; padding: 20px 40px; background: #d4af37; color: white; 
+            border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button id="btn">VER CONVITE MÁGICO</button>
+
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; uiLoading: no;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        
+        <a-assets>
+            <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous" playsinline webkit-playsinline></video>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            <!-- CORREÇÃO AQUI: Usamos o material de forma correta -->
+            <a-entity geometry="primitive: plane; width: 1; height: 1" 
+                      material="shader: chromakey; src: #vid; color: 0 1 0" 
+                      position="0 0 0.1">
+            </a-entity>
+        </a-entity>
+    </a-scene>
+
+    <script>
         const btn = document.querySelector('#btn');
         const video = document.querySelector('#vid');
-
         btn.addEventListener('click', () => {
-            // Tenta dar play no vídeo (necessário clique do utilizador para som no telemóvel)
             video.play();
             btn.style.display = 'none';
-            console.log("Experiência iniciada!");
-        });
-
-        // Caso o vídeo termine, podemos mostrar o botão de novo ou fazer outra ação
-        video.addEventListener('ended', () => {
-            console.log("Vídeo terminou.");
         });
     </script>
 </body>
