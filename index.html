@@ -6,7 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
     
     <script>
-        // REGISTO DO EFEITO HOLOGRAMA (CHROMA KEY)
+        // REGISTO DO SHADER (FILTRO DE TRANSPARÊNCIA)
         AFRAME.registerShader('chromakey', {
             schema: {
                 src: {type: 'map'},
@@ -31,8 +31,9 @@
                         uniform vec3 color;
                         void main() {
                             vec4 tColor = texture2D(tex, vUv);
+                            // Ajustei a sensibilidade para 0.3 para não apagar o vídeo todo
                             float dist = distance(tColor.rgb, color);
-                            if (dist < 0.4) { discard; }
+                            if (dist < 0.3) { discard; }
                             gl_FragColor = tColor;
                         }
                     `,
@@ -44,18 +45,19 @@
 
     <style>
         body { margin: 0; overflow: hidden; }
+        /* Botão Dourado */
         #btn { 
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 1000; padding: 20px 40px; background: #d4af37; color: white; 
             border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body>
     <button id="btn">VER CONVITE MÁGICO</button>
 
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; uiLoading: no; filterMinCF:0.0001; filterBeta: 0.001;" 
+    <a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: no;" 
              color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
@@ -66,11 +68,13 @@
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
         <a-entity mindar-image-target="targetIndex: 0">
-            <!-- O VÍDEO HOLOGRAMA -->
-            <a-entity geometry="primitive: plane; width: 1.2; height: 1.2" 
-                      material="shader: chromakey; src: #vid; color: 0 1 0" 
-                      position="0 0.2 0.1">
-            </a-entity>
+            <!-- VÍDEO PRINCIPAL -->
+            <a-video src="#vid" width="1.2" height="1.2" position="0 0.3 0.1" 
+                     material="shader: chromakey; color: 0 1 0">
+            </a-video>
+            
+            <!-- CAIXA AZUL DE TESTE (Para confirmar que a AR está ativa) -->
+            <a-box position="-0.6 0 0.1" scale="0.1 0.1 0.1" color="blue"></a-box>
         </a-entity>
     </a-scene>
 
@@ -79,8 +83,12 @@
         const video = document.querySelector('#vid');
         
         btn.addEventListener('click', () => {
-            video.play();
-            btn.style.display = 'none';
+            video.play().then(() => {
+                btn.style.display = 'none';
+            }).catch(err => {
+                console.log("Erro ao tocar vídeo:", err);
+                btn.style.display = 'none';
+            });
         });
     </script>
 </body>
