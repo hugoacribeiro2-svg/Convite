@@ -1,5 +1,5 @@
 // URL do Google Apps Script (Tens de substituir pelo teu link depois de publicares o script)
-const GOOGLE_APP_URL = "COLA_AQUI_O_TEU_LINK_DO_GOOGLE_SCRIPT";
+const GOOGLE_APP_URL = "https://script.google.com/macros/s/AKfycby67mgHHtlA0V-fER_IZEARWqYPI5Owd-SWVvWSQ59AiT4cFIahUErWITIFB7GfISkP-Q/exec";
 
 document.addEventListener("DOMContentLoaded", function() {
   const target = document.querySelector('#convite-target');
