@@ -2,40 +2,86 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Bibliotecas Diretas da Cloud -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-face-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
+    
+    <script>
+        // REGISTO DO EFEITO HOLOGRAMA (CHROMA KEY)
+        AFRAME.registerShader('chromakey', {
+            schema: {
+                src: {type: 'map'},
+                color: {type: 'color', default: {r: 0, g: 1, b: 0}}
+            },
+            init: function(data) {
+                this.material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        tex: {value: data.src},
+                        color: {value: new THREE.Color(data.color)}
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec2 vUv;
+                        uniform sampler2D tex;
+                        uniform vec3 color;
+                        void main() {
+                            vec4 tColor = texture2D(tex, vUv);
+                            // Sensibilidade do verde ajustada para 0.4
+                            float dist = distance(tColor.rgb, color);
+                            if (dist < 0.4) { discard; }
+                            gl_FragColor = tColor;
+                        }
+                    `,
+                    transparent: true
+                });
+            }
+        });
+    </script>
+
     <style>
         body { margin: 0; overflow: hidden; }
-        #loading {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: white; font-family: sans-serif; z-index: 10;
+        #btn { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 1000; padding: 20px 40px; background: #d4af37; color: white; 
+            border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div id="loading">A carregar Realidade Aumentada...</div>
+    <button id="btn">VER CONVITE MÁGICO</button>
 
-    <!-- Cena de Face Tracking (Não precisa de ficheiro .mind) -->
-    <a-scene mindar-face embeded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <!-- ATENÇÃO: Referência atualizada para targets2.mind -->
+    <a-scene mindar-image="imageTargetSrc: ./targets2.mind; autoStart: true; uiLoading: no; filterMinCF:0.0001; filterBeta: 0.001;" 
+             color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+             vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
-        <a-camera active="false" position="0 0 0" look-controls="enabled: false"></a-camera>
+        <a-assets>
+            <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous" playsinline webkit-playsinline></video>
+        </a-assets>
 
-        <!-- Deteta o rosto e coloca algo lá -->
-        <a-entity mindar-face-target="anchorIndex: 10">
-            <!-- Um simples Cubo Vermelho que vai aparecer na tua testa -->
-            <a-box position="0 0.5 0" scale="0.2 0.2 0.2" color="#d4af37" 
-                   animation="property: rotation; to: 0 360 0; dur: 2000; loop: true">
-            </a-box>
-            <!-- Um texto flutuante -->
-            <a-text value="TESTE OK!" position="-0.3 0.8 0" color="gold" width="2"></a-text>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            <!-- VÍDEO HOLOGRAMA -->
+            <a-entity geometry="primitive: plane; width: 1.2; height: 1.2" 
+                      material="shader: chromakey; src: #vid; color: 0 1 0" 
+                      position="0 0.1 0.1">
+            </a-entity>
         </a-entity>
     </a-scene>
 
     <script>
-        // Remover a mensagem de loading quando a câmara abrir
-        window.addEventListener("arReady", (event) => {
-            document.getElementById('loading').style.display = 'none';
+        const btn = document.querySelector('#btn');
+        const video = document.querySelector('#vid');
+        btn.addEventListener('click', () => {
+            video.play();
+            btn.style.display = 'none';
         });
     </script>
 </body>
