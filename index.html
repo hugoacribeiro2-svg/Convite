@@ -3,121 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Convite AR</title>
+  <title>Teste Convite AR</title>
   
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
-  <script src="https://unpkg.com/aframe-chromakey-material/dist/aframe-chromakey-material.min.js"></script>
 
   <style>
     body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; }
 
-    /* ECRÃ DE INÍCIO (Para desbloquear o vídeo) */
+    /* ECRÃ DE INÍCIO - OBRIGATÓRIO */
     #start-screen {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      z-index: 99999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      color: white;
-      text-align: center;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); z-index: 99999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: white; text-align: center;
     }
-
     #btn-start {
-      padding: 15px 30px;
-      font-size: 20px;
-      background: #d4af37;
-      color: white;
-      border: none;
-      border-radius: 50px;
-      margin-top: 20px;
-      cursor: pointer;
-      font-weight: bold;
+      padding: 20px 40px; font-size: 20px; background: #d4af37; color: white;
+      border: none; border-radius: 50px; margin-top: 30px; font-weight: bold;
     }
 
-    /* Interface normal */
-    #ui-container {
-      position: fixed;
-      bottom: 20px; left: 0; width: 100%;
-      text-align: center;
-      z-index: 1000;
-      pointer-events: none;
-    }
-    
-    .painel {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 20px;
-      margin: 0 auto 20px auto;
-      width: 90%; max-width: 400px;
-      border-radius: 15px;
-      pointer-events: auto;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-
+    /* Interface */
+    #ui-container { position: fixed; bottom: 20px; left: 0; width: 100%; z-index: 1000; text-align: center; pointer-events: none; }
+    .painel { pointer-events: auto; background: white; padding: 20px; margin: 0 auto; width: 80%; border-radius: 15px; }
     .hidden { display: none !important; }
-
-    input, select, button {
-      width: 100%; padding: 12px; margin-bottom: 10px;
-      border-radius: 5px; border: 1px solid #ccc;
-      box-sizing: border-box; font-size: 16px;
-    }
-    button { background: #d4af37; color: white; border: none; font-weight: bold; }
-    #btn-rejeitar { background: #999; }
   </style>
 </head>
 <body>
 
-  <!-- 1. ECRÃ DE BLOQUEIO (Obrigatório para iOS/Android deixarem tocar vídeo) -->
+  <!-- 1. BOTÃO DE INÍCIO -->
   <div id="start-screen">
-    <h1>Bem-vindos!</h1>
-    <p>Ative o som e clique para começar.</p>
-    <button id="btn-start">📸 INICIAR CÂMARA</button>
+    <h1>Toque para Começar</h1>
+    <button id="btn-start">📸 LIGAR CÂMARA</button>
   </div>
 
-  <!-- 2. INTERFACE -->
   <div id="ui-container" class="hidden">
-    <div id="rsvp-buttons" class="painel">
-      <h3>Vens celebrar?</h3>
-      <button id="btn-confirmar">Vou com certeza!</button>
-      <button id="btn-rejeitar">Não poderei ir</button>
-    </div>
-
-    <div id="form-logistica" class="painel hidden">
-      <h3>Confirmação</h3>
-      <input type="text" id="nome" placeholder="O teu nome">
-      <select id="prato">
-        <option value="" disabled selected>Escolhe o Prato...</option>
-        <option value="Carne">Carne</option>
-        <option value="Peixe">Peixe</option>
-        <option value="Vegetariano">Vegetariano</option>
-      </select>
-      <button id="btn-enviar">Finalizar</button>
+    <div class="painel">
+      <h3>Se vires o vídeo com fundo verde, funcionou!</h3>
     </div>
   </div>
 
-  <!-- 3. CENA AR -->
-  <!-- Adicionei filterMin: linear para tentar reduzir o grão/tripar -->
-  <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false; filterMin: linear;" 
-           color-space="sRGB" 
-           renderer="colorManagement: true, physicallyCorrectLights" 
-           vr-mode-ui="enabled: false" 
-           device-orientation-permission-ui="enabled: false">
+  <!-- 2. CENA AR (SEM CHROMA KEY) -->
+  <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false;" 
+           color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
+           vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
     
     <a-assets>
-      <!-- Pré-carregar o vídeo -->
-      <video id="holograma" src="video_casal.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop></video>
+      <!-- ADICIONEI 'muted' e 'preload' -->
+      <video id="holograma" src="video_casal.mp4" preload="auto" loop crossorigin="anonymous" playsinline webkit-playsinline muted></video>
     </a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0" id="convite-target">
-      <!-- Se continuar preto, muda o color: 0.1 0.9 0.2 para ajustar ao teu tom de verde -->
-      <a-video src="#holograma" position="0 0.5 0" height="1" width="1.5" 
-               material="shader: chromakey; color: 0.1 0.9 0.2" 
-               rotation="0 0 0"></a-video>
+      <!-- REMOVI O EFEITO CHROMA KEY. Agora é um vídeo normal -->
+      <a-video src="#holograma" position="0 0.5 0" height="1" width="1.5" rotation="0 0 0"></a-video>
     </a-entity>
   </a-scene>
 
