@@ -2,63 +2,120 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>O Nosso Casamento - Convite AR</title>
   
   <!-- Importar A-Frame e MindAR -->
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
-  <!-- Componente Chroma Key (para retirar o fundo verde do vídeo) -->
   <script src="https://unpkg.com/aframe-chromakey-material/dist/aframe-chromakey-material.min.js"></script>
   
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ESTILOS (CSS) - Para garantir que os botões funcionam */
+    body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; }
+    
+    #ui-container {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      z-index: 1000; /* Garante que fica À FRENTE do vídeo */
+      pointer-events: none; /* Deixa clicar na cena AR se não houver botões */
+    }
+
+    /* As caixas brancas onde estão os botões */
+    .painel {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      margin: 0 auto 20px auto;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      pointer-events: auto; /* IMPORTANTE: Torna os botões clicáveis */
+      display: block;
+    }
+
+    h2, h3 { margin-top: 0; color: #333; }
+
+    /* Botões Bonitos */
+    button {
+      background-color: #d4af37; /* Dourado */
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 5px;
+      margin: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+    
+    button#btn-rejeitar { background-color: #999; }
+
+    /* Campos do formulário */
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 16px; /* Evita zoom no iPhone */
+    }
+
+    /* Classe para esconder coisas */
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
 
-  <!-- UI Sobreposta (Interface 2D para RSVP e Formulário) -->
+  <!-- INTERFACE (Botões e Formulários) -->
   <div id="ui-container" class="hidden">
-    <div id="rsvp-buttons">
+    
+    <!-- Passo 1: Confirmar Presença -->
+    <div id="rsvp-buttons" class="painel">
       <h2>Vens celebrar connosco?</h2>
       <button id="btn-confirmar">Vou com certeza!</button>
       <button id="btn-rejeitar">Não poderei ir</button>
     </div>
 
-    <!-- Formulário de Logística que aparece após confirmar -->
-    <div id="form-logistica" class="hidden">
+    <!-- Passo 2: Formulário de Logística -->
+    <div id="form-logistica" class="painel hidden">
       <h3>Detalhes da tua presença</h3>
-      <input type="text" id="nome" placeholder="O teu nome" required>
+      <input type="text" id="nome" placeholder="O teu nome completo">
+      
       <select id="prato">
+        <option value="" disabled selected>Escolhe o teu prato...</option>
         <option value="Carne">Prato de Carne</option>
         <option value="Peixe">Prato de Peixe</option>
         <option value="Vegetariano">Prato Vegetariano</option>
       </select>
+      
       <input type="text" id="alergias" placeholder="Alergias ou restrições?">
       <button id="btn-enviar">Enviar Confirmação</button>
     </div>
   </div>
 
-  <!-- Cena A-Frame com MindAR (Rastreio de Imagem) -->
-  <a-scene mindar-image="imageTargetSrc: ./assets/targets.mind; autoStart: true;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+  <!-- CENA AR (Realidade Aumentada) -->
+  <!-- CORREÇÃO: targets.mind sem a pasta assets/ -->
+  <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: true; uiLoading: no; uiError: yes;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
     
     <a-assets>
-      <!-- O vídeo dos noivos com fundo verde -->
-      <video id="holograma" src="./assets/video_casal.mp4" loop crossorigin="anonymous" playsinline></video>
+      <!-- CORREÇÃO: video_casal.mp4 sem a pasta assets/ -->
+      <video id="holograma" src="video_casal.mp4" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
     </a-assets>
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- O target (quando a imagem do convite é detetada) -->
     <a-entity mindar-image-target="targetIndex: 0" id="convite-target">
-      
-      <!-- Vídeo Holograma com efeito Chroma Key -->
+      <!-- Vídeo Holograma -->
       <a-video src="#holograma" position="0 0.5 0" height="1" width="1.5" material="shader: chromakey; color: 0.1 0.9 0.2" rotation="0 0 0"></a-video>
-      
-      <!-- Texto 3D de Boas-vindas -->
-      <a-text value="Bem-vindos!" color="#FFFFFF" align="center" position="0 1.2 0"></a-text>
-
     </a-entity>
   </a-scene>
 
-  <script src="js/app.js"></script>
+  <!-- CORREÇÃO: app.js sem a pasta js/ -->
+  <script src="app.js"></script>
 </body>
 </html>
