@@ -1,19 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Convite de Casamento AR</title>
+
+    <!-- Bibliotecas Necessárias -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.0/dist/mindar-image-aframe.prod.js"></script>
     
     <script>
+        // REGISTO DO SHADER HOLOGRAMA (CHROMA KEY)
+        // Isto remove o fundo verde do vídeo exemplo1.mp4
         AFRAME.registerShader('chromakey', {
-            schema: { src: {type: 'map'}, color: {type: 'color', default: {r: 0, g: 1, b: 0}} },
+            schema: {
+                src: {type: 'map'},
+                color: {type: 'color', default: {r: 0, g: 1, b: 0}}
+            },
             init: function(data) {
                 this.material = new THREE.ShaderMaterial({
-                    uniforms: { tex: {value: data.src}, color: {value: new THREE.Color(data.color)} },
-                    vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                    fragmentShader: `varying vec2 vUv; uniform sampler2D tex; uniform vec3 color; void main() { vec4 tColor = texture2D(tex, vUv); float dist = distance(tColor.rgb, color); if (dist < 0.4) { discard; } gl_FragColor = tColor; }`,
+                    uniforms: {
+                        tex: {value: data.src},
+                        color: {value: new THREE.Color(data.color)}
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+                    `,
+                    fragmentShader: `
+                        varying vec2 vUv;
+                        uniform sampler2D tex;
+                        uniform vec3 color;
+                        void main() {
+                            vec4 tColor = texture2D(tex, vUv);
+                            float dist = distance(tColor.rgb, color);
+                            if (dist < 0.35) { discard; }
+                            gl_FragColor = tColor;
+                        }
+                    `,
                     transparent: true
                 });
             }
@@ -21,19 +46,49 @@
     </script>
 
     <style>
-        body { margin: 0; overflow: hidden; background-color: black; }
-        #btn { 
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 10000; padding: 20px 40px; background: #d4af37; color: white; 
-            border: none; border-radius: 50px; font-weight: bold; font-size: 20px;
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        
+        /* Botão para iniciar (Necessário para o som e câmara) */
+        #start-btn {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 1000; padding: 20px 40px; background: #d4af37; color: white;
+            border: none; border-radius: 50px; font-weight: bold; font-size: 18px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); cursor: pointer;
+        }
+
+        /* Formulário de Confirmação (Aparece no fim do vídeo) */
+        #rsvp-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; max-width: 350px; background: white; padding: 20px;
+            border-radius: 15px; display: none; z-index: 2000; text-align: center;
+        }
+        #rsvp-modal input, #rsvp-modal select {
+            width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;
+        }
+        #rsvp-modal button {
+            width: 100%; padding: 10px; background: #d4af37; color: white; border: none; border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <button id="btn">VER CONVITE MÁGICO</button>
 
-    <!-- Adicionei 'color-management' e forcei o arranque da câmara -->
-    <a-scene mindar-image="imageTargetSrc: ./targets2.mind; autoStart: true; uiLoading: no;" 
+    <button id="start-btn">VER CONVITE MÁGICO</button>
+
+    <!-- FORMULÁRIO RSVP -->
+    <div id="rsvp-modal">
+        <h3 style="color:#d4af37">Confirmar Presença</h3>
+        <input type="text" id="guest-name" placeholder="Seu Nome">
+        <select id="guest-meal">
+            <option value="">Escolha o Prato</option>
+            <option value="Carne">Carne</option>
+            <option value="Peixe">Peixe</option>
+            <option value="Vegetariano">Vegetariano</option>
+        </select>
+        <button id="submit-rsvp">Enviar Confirmação</button>
+    </div>
+
+    <!-- CENA AR -->
+    <a-scene mindar-image="imageTargetSrc: ./targets2.mind; autoStart: false; uiLoading: no;" 
              embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         
@@ -41,28 +96,53 @@
             <video id="vid" src="./exemplo1.mp4" loop="false" crossorigin="anonymous" playsinline webkit-playsinline></video>
         </a-assets>
 
-        <!-- A câmara tem de ter o ID para o MindAR se injetar nela -->
-        <a-camera position="0 0 0" look-controls="enabled: false" raycaster="objects: .clickable"></a-camera>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
         <a-entity mindar-image-target="targetIndex: 0">
+            <!-- VÍDEO HOLOGRAMA -->
             <a-entity geometry="primitive: plane; width: 1.2; height: 1.2" 
                       material="shader: chromakey; src: #vid; color: 0 1 0" 
-                      position="0 0.1 0.1">
+                      position="0 0.2 0.1">
             </a-entity>
         </a-entity>
     </a-scene>
 
     <script>
-        const btn = document.querySelector('#btn');
+        const startBtn = document.querySelector('#start-btn');
         const video = document.querySelector('#vid');
-        btn.addEventListener('click', () => {
+        const sceneEl = document.querySelector('a-scene');
+        const rsvpModal = document.querySelector('#rsvp-modal');
+
+        // 1. Clicar para começar
+        startBtn.addEventListener('click', () => {
+            sceneEl.systems['mindar-image-system'].start(); // Liga a câmara
             video.play();
-            btn.style.display = 'none';
+            startBtn.style.display = 'none';
         });
-        
-        // Alerta visual se a câmara falhar
-        window.addEventListener("arError", (event) => {
-           alert("Erro na Câmara: Certifique-se que deu permissão e usa HTTPS.");
+
+        // 2. Quando o vídeo acaba, mostra o formulário
+        video.addEventListener('ended', () => {
+            rsvpModal.style.display = 'block';
+        });
+
+        // 3. Enviar para o Google Sheets
+        document.querySelector('#submit-rsvp').addEventListener('click', () => {
+            const name = document.querySelector('#guest-name').value;
+            const meal = document.querySelector('#guest-meal').value;
+            
+            if(!name || !meal) { alert("Preencha todos os campos"); return; }
+
+            // URL DO TEU GOOGLE APPS SCRIPT
+            const scriptURL = 'COLA_AQUI_O_TEU_URL_DO_SCRIPT';
+
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({nome: name, prato: meal})
+            }).then(() => {
+                alert("Obrigado! Confirmação enviada.");
+                rsvpModal.style.display = 'none';
+            }).catch(err => alert("Erro ao enviar."));
         });
     </script>
 </body>
